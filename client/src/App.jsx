@@ -1,7 +1,7 @@
-import Upload from "./components/Upload";
+import UploadResume from "./components/UploadResume";
 
 function App() {
-  return <Upload />;
+  return <UploadResume />;
 }
 
 export default App;
