@@ -1,20 +1,28 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
+// CORS Fix (allow Vercel frontend)
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"]
+}));
 
-app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 const resumeRoutes = require("./routes/resumeRoutes");
 app.use("/api/resume", resumeRoutes);
 
-// Root test route
+// Root route
 app.get("/", (req, res) => {
-    console.log("Root route accessed");
     res.send("Resume Analyst API Running");
 });
 
