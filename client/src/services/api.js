@@ -1,22 +1,13 @@
 const API = import.meta.env.VITE_API_URL;
 
 export const uploadResume = async (formData) => {
-  try {
-    const res = await fetch(`${API}/api/resume/upload`, {
-      method: "POST",
-      body: formData,
-    });
+  const res = await fetch(`${API}/api/resume/upload`, {
+    method: "POST",
+    body: formData,
+  });
 
-    // Safely read JSON (even if backend is slow)
-    const data = await res.json();
+  const data = await res.json();
+  console.log("Backend Response:", data);  // 🔴 ADD THIS
 
-    // Log once for debugging (can remove later)
-    console.log("Backend Response:", data);
-
-    // Do NOT throw early; just return response
-    return data;
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error; // only real network failures will reach catch
-  }
+  return data;
 };
