@@ -1,5 +1,6 @@
 const API = import.meta.env.VITE_API_URL;
 
+
 export const uploadResume = async (formData) => {
   try {
     const res = await fetch(`${API}/api/resume/upload`, {

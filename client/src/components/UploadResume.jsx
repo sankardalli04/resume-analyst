@@ -20,13 +20,21 @@ const UploadResume = () => {
 
     try {
       setLoading(true);
-      const data = await uploadResume(formData);
-      setAnalysis(data.analysis);
+      setAnalysis(""); // clear previous result
+      setScore(null);
 
-      const atsScore = extractScore(data.analysis);
-      setScore(atsScore);
+      const data = await uploadResume(formData);
+
+      if (data && data.analysis) {
+        setAnalysis(data.analysis);
+        const atsScore = extractScore(data.analysis);
+        setScore(atsScore);
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (error) {
-      alert("Error analyzing resume");
+      console.error("Upload error:", error);
+      alert("Failed to analyze resume. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -49,6 +57,8 @@ const UploadResume = () => {
             {loading ? "Analyzing..." : "Analyze Resume"}
           </button>
         </div>
+
+        {loading && <p>⏳ Analyzing resume... please wait</p>}
 
         {score !== null && (
           <div style={styles.scoreContainer}>
