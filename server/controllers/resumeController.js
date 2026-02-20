@@ -1,121 +1,143 @@
 const fs = require("fs");
 const pdfParse = require("pdf-parse");
 
-// Keyword categories for scoring & suggestions
-const keywordCategories = {
-    languages: ["python", "java", "c++", "javascript", "sql"],
-    web: ["react", "node", "express", "html", "css", "rest", "api"],
-    ai_ml: [
-        "machine learning",
-        "nlp",
-        "computer vision",
-        "opencv",
-        "scikit-learn",
-        "pandas",
-        "numpy",
-        "deep learning",
-    ],
-    tools: ["git", "github", "docker", "aws", "cloud", "power bi"],
+// Industry skill sets
+const skillSets = {
+  programming: ["python", "java", "c++", "javascript", "sql"],
+  web: ["react", "node", "express", "html", "css", "api", "rest"],
+  ai_ml: [
+    "machine learning",
+    "deep learning",
+    "nlp",
+    "computer vision",
+    "opencv",
+    "scikit-learn",
+    "pandas",
+    "numpy",
+    "tensorflow",
+    "pytorch",
+  ],
+  databases: ["mongodb", "mysql", "postgresql"],
+  tools: ["git", "github", "docker", "aws", "cloud", "power bi", "tableau"],
+  fundamentals: [
+    "data structures",
+    "algorithms",
+    "dbms",
+    "operating systems",
+    "computer networks",
+  ],
 };
 
-// 🔢 Calculate ATS Score dynamically
-const calculateATSScore = (text) => {
-    let score = 0;
-    const lowerText = text.toLowerCase();
-
-    Object.values(keywordCategories)
-        .flat()
-        .forEach((keyword) => {
-            if (lowerText.includes(keyword)) {
-                score += 3; // weight per keyword
-            }
-        });
-
-    return Math.min(score, 100);
+// Count matches
+const countMatches = (text, keywords) => {
+  return keywords.filter((k) => text.includes(k)).length;
 };
 
-// 🤖 Generate automated suggestions based on missing elements
+// Section-wise scoring
+const evaluateSections = (text) => {
+  const scores = {};
+
+  scores.skills = countMatches(text, skillSets.programming.concat(skillSets.web, skillSets.ai_ml)) * 2;
+  scores.projects = text.includes("project") ? 15 : 5;
+  scores.experience = text.includes("intern") || text.includes("experience") ? 15 : 5;
+  scores.achievements = /\d+%|\d+\+|\d+\s*(users|accuracy|projects)/i.test(text) ? 15 : 5;
+  scores.formatting = text.includes("education") && text.includes("skills") ? 10 : 5;
+
+  return scores;
+};
+
+// Missing skill detection
+const detectMissingSkills = (text) => {
+  const missing = [];
+
+  Object.entries(skillSets).forEach(([category, skills]) => {
+    const absent = skills.filter((s) => !text.includes(s));
+    if (absent.length > 0) {
+      missing.push(`${category.toUpperCase()}: ${absent.slice(0, 5).join(", ")}`);
+    }
+  });
+
+  return missing;
+};
+
+// Generate realistic suggestions
 const generateSuggestions = (text) => {
-    const lowerText = text.toLowerCase();
-    const suggestions = [];
+  const suggestions = [];
 
-    // Check missing skill categories
-    Object.entries(keywordCategories).forEach(([category, keywords]) => {
-        const found = keywords.some((k) => lowerText.includes(k));
-        if (!found) {
-            suggestions.push(`Consider adding more ${category.toUpperCase()} related skills.`);
-        }
-    });
+  if (!/\d+%|\d+\+|\d+\s*(users|accuracy|models)/i.test(text)) {
+    suggestions.push(
+      "Add quantified achievements (e.g., improved accuracy by 15%, handled 1000+ users)."
+    );
+  }
 
-    // Check measurable achievements
-    if (!/\d+%|\d+\+|\d+\s*(users|projects|models|accuracy)/i.test(text)) {
-        suggestions.push("Add measurable achievements with numbers or percentages.");
-    }
+  if (!text.includes("github")) {
+    suggestions.push("Include GitHub links to showcase project implementations.");
+  }
 
-    // Check GitHub
-    if (!lowerText.includes("github")) {
-        suggestions.push("Include a GitHub profile link to showcase your projects.");
-    }
+  if (!text.includes("impact") && !text.includes("improved")) {
+    suggestions.push(
+      "Describe the impact of your projects (e.g., optimized performance, increased efficiency)."
+    );
+  }
 
-    // Check LinkedIn
-    if (!lowerText.includes("linkedin")) {
-        suggestions.push("Include a LinkedIn profile link for professional visibility.");
-    }
+  if (!text.includes("cloud") && !text.includes("aws")) {
+    suggestions.push(
+      "Consider adding cloud or deployment experience (AWS, Docker, CI/CD) to strengthen profile."
+    );
+  }
 
-    // Check Projects section
-    if (!lowerText.includes("projects")) {
-        suggestions.push("Add a dedicated Projects section to highlight practical work.");
-    }
-
-    // Fallback suggestion if resume already strong
-    if (suggestions.length === 0) {
-        suggestions.push("Great resume! Consider adding more quantified achievements for extra impact.");
-    }
-
-    return suggestions;
+  return suggestions;
 };
 
-// 🚀 Main Controller
 exports.uploadResume = async (req, res) => {
-    try {
-        // 1️⃣ Validate file
-        if (!req.file) {
-            return res.status(400).json({ error: "No resume file uploaded" });
-        }
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No resume file uploaded" });
+    }
 
-        // 2️⃣ Read uploaded PDF
-        const fileBuffer = fs.readFileSync(req.file.path);
+    const buffer = fs.readFileSync(req.file.path);
+    const pdfData = await pdfParse(buffer);
+    const text = pdfData.text.toLowerCase();
 
-        // 3️⃣ Extract text from PDF
-        const pdfData = await pdfParse(fileBuffer);
-        const resumeText = pdfData.text || "";
+    // Section scoring
+    const sectionScores = evaluateSections(text);
+    const totalScore = Math.min(
+      Object.values(sectionScores).reduce((a, b) => a + b, 0),
+      100
+    );
 
-        // 4️⃣ Generate score & suggestions
-        const atsScore = calculateATSScore(resumeText);
-        const suggestions = generateSuggestions(resumeText);
+    const missingSkills = detectMissingSkills(text);
+    const suggestions = generateSuggestions(text);
 
-        // 5️⃣ Build analysis report dynamically
-        const analysis = `
-📊 AI Analysis Report
+    const analysis = `
+📊 AI Resume Analysis Report
 
-ATS Score: ${atsScore}/100
+🔢 Overall ATS Score: ${totalScore}/100
 
-🔎 Resume Summary:
-Your resume was successfully parsed and analyzed using automated keyword and content evaluation.
+📌 Section-wise Evaluation:
+• Skills Coverage: ${sectionScores.skills}/30
+• Projects Quality: ${sectionScores.projects}/15
+• Experience Strength: ${sectionScores.experience}/15
+• Quantified Achievements: ${sectionScores.achievements}/15
+• ATS Formatting & Structure: ${sectionScores.formatting}/10
 
-📌 Automated Suggestions:
+🧩 Missing Skills (based on industry expectations):
+${missingSkills.map((m) => `- ${m}`).join("\n")}
+
+📌 Actionable Improvement Suggestions:
 ${suggestions.map((s) => `- ${s}`).join("\n")}
 
-📄 Extracted Text Length: ${resumeText.length} characters
+🧠 Summary:
+Your resume demonstrates relevant technical exposure and project experience.
+Enhancing quantified impact, adding advanced tools, and highlighting deployment/cloud skills
+will significantly improve ATS ranking and recruiter appeal.
+
+📄 Extracted Text Length: ${text.length} characters
 `;
 
-        // 6️⃣ Send response
-        res.status(200).json({ analysis });
-
-    } catch (error) {
-        console.error("Resume Upload Error:", error);
-        res.status(500).json({
-            error: "Server error while analyzing resume",
-        });
-    }
+    res.status(200).json({ analysis });
+  } catch (error) {
+    console.error("Resume Upload Error:", error);
+    res.status(500).json({ error: "Server error while analyzing resume" });
+  }
 };
