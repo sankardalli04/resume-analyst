@@ -1,12 +1,20 @@
-import axios from "axios";
+const API = import.meta.env.VITE_API_URL;
 
 export const uploadResume = async (formData) => {
-    const res = await axios.post(
-        "http://127.0.0.1:5001/api/resume/upload",
-        formData,
-        {
-            headers: { "Content-Type": "multipart/form-data" },
-        }
-    );
-    return res.data;
+  try {
+    const res = await fetch(`${API}/api/resume/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      throw new Error("Upload failed");
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error;
+  }
 };

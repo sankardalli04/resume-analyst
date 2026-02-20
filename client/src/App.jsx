@@ -1,12 +1,7 @@
-import UploadResume from "./components/UploadResume";
+import Upload from "./components/Upload";
 
 function App() {
-  return (
-    <div>
-      <h1>AI Resume Analyzer</h1>
-      <UploadResume />
-    </div>
-  );
+  return <Upload />;
 }
 
 export default App;
