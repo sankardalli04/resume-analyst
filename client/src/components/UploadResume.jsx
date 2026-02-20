@@ -13,24 +13,34 @@ const UploadResume = () => {
   };
 
   const handleUpload = async () => {
-    if (!file) return alert("Please select a resume PDF");
+  if (!file) return alert("Please select a resume PDF");
 
-    const formData = new FormData();
-    formData.append("resume", file);
+  const formData = new FormData();
+  formData.append("resume", file);
 
-    try {
-      setLoading(true);
-      const data = await uploadResume(formData);
+  try {
+    setLoading(true);
+    setAnalysis("");
+    setScore(null);
+
+    const data = await uploadResume(formData);
+
+    if (data && data.analysis) {
       setAnalysis(data.analysis);
-
       const atsScore = extractScore(data.analysis);
       setScore(atsScore);
-    } catch (error) {
-      alert("Error analyzing resume");
-    } finally {
-      setLoading(false);
+    } else if (data && data.error) {
+      alert(data.error);
+    } else {
+      alert("Unexpected response from server");
     }
-  };
+  } catch (error) {
+    console.error("Upload error:", error);
+    alert("Error analyzing resume");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={styles.page}>

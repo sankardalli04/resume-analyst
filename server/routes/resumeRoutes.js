@@ -1,8 +1,20 @@
 const express = require("express");
 const router = express.Router();
-const upload = require("../utils/upload");
-const { analyzeResume } = require("../controllers/resumeController");
+const multer = require("multer");
+const path = require("path");
+const { uploadResume } = require("../controllers/resumeController");
 
-router.post("/upload", upload.single("resume"), analyzeResume);
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+router.post("/upload", upload.single("resume"), uploadResume);
 
 module.exports = router;

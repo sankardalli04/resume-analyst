@@ -1,62 +1,26 @@
-console.log("CONTROLLER FILE LOADED");
-
 const fs = require("fs");
-const pdfParse = require("pdf-parse");
-const axios = require("axios");
+const path = require("path");
 
-console.log("typeof pdfParse =", typeof pdfParse);
-
-
-exports.analyzeResume = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
-        }
-
-        const filePath = req.file.path;
-        const dataBuffer = fs.readFileSync(filePath);
-
-        // Extract text from PDF
-        const pdfData = await pdfParse(dataBuffer);
-        const resumeText = pdfData.text;
-
-        if (!resumeText || resumeText.trim().length === 0) {
-            return res.status(400).json({
-                message: "Could not extract text from PDF"
-            });
-        }
-
-        const prompt = `
-Analyze this resume and provide:
-1. ATS Score (0-100)
-2. Missing Skills
-3. Improvement Suggestions
-
-Resume:
-${resumeText}
-`;
-
-        const response = await axios.post(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-  {
-    contents: [{ parts: [{ text: prompt }] }]
-  }
-);
-
-
-
-        const analysis =
-            response.data.candidates?.[0]?.content?.parts?.[0]?.text ||
-            "No analysis generated";
-
-        res.json({ analysis });
-
-    } catch (error) {
-        console.log("===== GEMINI FULL ERROR =====");
-        console.log(error.response?.data);
-        console.log(error.message);
-        console.log("================================");
-        res.status(500).json({ message: "Error analyzing resume" });
+exports.uploadResume = async (req, res) => {
+  try {
+    // Check file received
+    if (!req.file) {
+      return res.status(400).json({ error: "No resume file uploaded" });
     }
 
+    console.log("File received:", req.file.filename);
+
+    // For now return dummy analysis (to confirm backend works)
+    const analysisText = "Resume uploaded successfully. Analysis will appear here.";
+
+    return res.status(200).json({
+      analysis: analysisText,
+    });
+
+  } catch (error) {
+    console.error("Resume Upload Error:", error);
+    return res.status(500).json({
+      error: "Server error while analyzing resume",
+    });
+  }
 };
