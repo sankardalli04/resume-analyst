@@ -20,7 +20,7 @@ const UploadResume = () => {
 
     try {
       setLoading(true);
-      setAnalysis(""); // clear previous result
+      setAnalysis("");
       setScore(null);
 
       const data = await uploadResume(formData);
@@ -34,7 +34,10 @@ const UploadResume = () => {
       }
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to analyze resume. Please try again.");
+
+      if (!analysis) {
+        alert("Failed to analyze resume. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
