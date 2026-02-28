@@ -7,40 +7,57 @@ const UploadResume = () => {
   const [loading, setLoading] = useState(false);
   const [score, setScore] = useState(null);
 
-  const extractScore = (text) => {
-    const match = text.match(/ATS Score:\s*(\d+)/i);
-    return match ? parseInt(match[1]) : null;
+  const formatAnalysis = (data) => {
+    return `
+📊 AI Resume Analysis Report
+
+🔢 ATS Score: ${data.atsScore}/100
+
+📌 Present Skills:
+${Object.entries(data.presentSkills)
+  .map(([category, skills]) => `• ${category.toUpperCase()}: ${skills.join(", ") || "None"}`)
+  .join("\n")}
+
+🧩 Missing Skills:
+${Object.entries(data.missingSkills)
+  .map(([category, skills]) => `• ${category.toUpperCase()}: ${skills.join(", ") || "None"}`)
+  .join("\n")}
+
+🚀 Suggestions:
+${data.suggestions.map((s) => `• ${s}`).join("\n")}
+
+📄 Extracted Text Length: ${data.extractedTextLength} characters
+`;
   };
 
   const handleUpload = async () => {
-  if (!file) return alert("Please select a resume PDF");
+    if (!file) return alert("Please select a resume PDF");
 
-  const formData = new FormData();
-  formData.append("resume", file);
+    const formData = new FormData();
+    formData.append("resume", file); // must match multer field name
 
-  try {
-    setLoading(true);
-    setAnalysis("");
-    setScore(null);
+    try {
+      setLoading(true);
+      setAnalysis("");
+      setScore(null);
 
-    const data = await uploadResume(formData);
+      const data = await uploadResume(formData);
 
-    if (data && data.analysis) {
-      setAnalysis(data.analysis);
-      const atsScore = extractScore(data.analysis);
-      setScore(atsScore);
-    } else if (data && data.error) {
-      alert(data.error);
-    } else {
-      alert("Unexpected response from server");
+      if (data && data.atsScore !== undefined) {
+        setScore(data.atsScore);
+        setAnalysis(formatAnalysis(data));
+      } else if (data && data.error) {
+        alert(data.error);
+      } else {
+        alert("Unexpected response from server");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Error analyzing resume");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Upload error:", error);
-    alert("Error analyzing resume");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div style={styles.page}>
