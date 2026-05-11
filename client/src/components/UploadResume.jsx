@@ -15,6 +15,7 @@ const UploadResume = () => {
 
   const [jobDescription, setJobDescription] = useState("");
   const [sectionScores, setSectionScores] = useState(null);
+  const [detectedDomain, setDetectedDomain] = useState("");
 
   const formatAnalysis = (data) => {
     return `
@@ -115,6 +116,7 @@ Your resume demonstrates solid technical foundations. However, adding production
 
         setAnalysis(formatAnalysis(data));
         setSectionScores(data.sectionScores);
+        setDetectedDomain(data.detectedDomain);
       } else if (data && data.error) {
         alert(data.error);
       } else {
@@ -156,7 +158,21 @@ Your resume demonstrates solid technical foundations. However, adding production
                 {loading ? "Analyzing..." : "Analyze Resume"}
               </button>
             </div>
-
+            {detectedDomain && (
+              <div
+                style={{
+                  background: "#eef2ff",
+                  padding: "15px",
+                  borderRadius: "12px",
+                  marginBottom: "20px",
+                  fontWeight: "bold",
+                  fontSize: "20px",
+                  color: "#333",
+                }}
+              >
+                🧠 Detected Domain: {detectedDomain.toUpperCase()}
+              </div>
+            )}
             {score !== null && (
               <div style={styles.scoreContainer}>
                 <h2 style={styles.scoreTitle}>

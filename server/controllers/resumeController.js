@@ -1,6 +1,7 @@
 const fs = require("fs");
 const pdfParse = require("pdf-parse");
 const extractSkills = require("../utils/extractSkills");
+const domains = require("../data/domains");
 
 // Skill taxonomy with weights
 const skillTaxonomy = {
@@ -71,39 +72,66 @@ const skillAliases = {
     scalable: ["node", "express"],
     secure: ["jwt", "authentication", "api"],
 };
+const detectDomain = (text) => {
+    for (const [domain, data] of Object.entries(domains)) {
+        const matched = data.keywords.some((keyword) =>
+            text.includes(keyword)
+        );
+
+        if (matched) {
+            return domain;
+        }
+    }
+
+    return "general";
+};
 
 // Skill Analysis
-const analyzeSkills = (text) => {
+const analyzeSkills = (
+    text,
+    taxonomy = skillTaxonomy
+) => {
     let totalScore = 0;
+
     let maxScore = 0;
 
     const presentSkills = {};
+
     const missingSkills = {};
 
-    Object.entries(skillTaxonomy).forEach(([category, data]) => {
-        const { skills, weight } = data;
+    Object.entries(taxonomy).forEach(
+        ([category, data]) => {
+            const { skills, weight } = data;
 
-        maxScore += skills.length * weight;
+            maxScore += skills.length * weight;
 
-        const present = [];
-        const missing = [];
+            const present = [];
 
-        skills.forEach((skill) => {
-            if (text.includes(skill)) {
-                present.push(skill);
-                totalScore += weight;
-            } else {
-                missing.push(skill);
-            }
-        });
+            const missing = [];
 
-        presentSkills[category] = present;
-        missingSkills[category] = missing;
-    });
+            skills.forEach((skill) => {
+                if (text.includes(skill)) {
+                    present.push(skill);
+
+                    totalScore += weight;
+                } else {
+                    missing.push(skill);
+                }
+            });
+
+            presentSkills[category] = present;
+
+            missingSkills[category] = missing;
+        }
+    );
 
     return {
-        score: Math.round((totalScore / maxScore) * 40),
+        score: Math.round(
+            (totalScore / maxScore) * 40
+        ),
+
         presentSkills,
+
         missingSkills,
     };
 };
@@ -215,6 +243,10 @@ exports.uploadResume = async (req, res) => {
 
         const text = pdfData.text.toLowerCase();
 
+        // Detect Resume Domain
+        const detectedDomain = detectDomain(text);
+
+        console.log("Detected Domain:", detectedDomain);
         // Job Description
         const jobDescription = req.body.jobDescription || "";
 
@@ -252,13 +284,16 @@ exports.uploadResume = async (req, res) => {
         const jdMatchScore =
             jdSkills.length > 0
                 ? Math.round(
-                      (matchedSkills.length / jdSkills.length) * 100
-                  )
+                    (matchedSkills.length / jdSkills.length) * 100
+                )
                 : 0;
 
         // ATS Analysis
-        const skillAnalysis = analyzeSkills(text);
+        const activeTaxonomy =
+            domains[detectedDomain]?.taxonomy || skillTaxonomy;
 
+        const skillAnalysis =
+            analyzeSkills(text, activeTaxonomy);
         const experienceScore = evaluateExperience(text);
 
         const projectScore = evaluateProjects(text);
@@ -270,10 +305,10 @@ exports.uploadResume = async (req, res) => {
         // Final ATS Score
         const atsScore = Math.min(
             skillAnalysis.score +
-                experienceScore +
-                projectScore +
-                achievementScore +
-                formattingScore,
+            experienceScore +
+            projectScore +
+            achievementScore +
+            formattingScore,
             100
         );
 
@@ -285,6 +320,7 @@ exports.uploadResume = async (req, res) => {
 
         // Final Response
         const result = {
+            detectedDomain,
             atsScore,
 
             jdMatchScore,
