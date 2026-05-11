@@ -1,7 +1,10 @@
 AI Resume Analyzer 🚀
 An intelligent multi-domain ATS Resume Analyzer built using the MERN stack that evaluates resumes, calculates ATS scores, matches resumes with job descriptions, and provides AI-style career insights.
 🌟 Features
-✅ ATS Resume Scoring
+
+
+
+         ✅ ATS Resume Scoring
 Calculates resume ATS score out of 100
 Evaluates:
 Skills
@@ -9,13 +12,17 @@ Projects
 Experience
 Achievements
 Resume formatting
-✅ Smart Job Description Matching
+
+
+        ✅ Smart Job Description Matching
 Matches resume against job descriptions
 Calculates JD Match Score
 Detects:
 Matched Skills
 Missing Skills
-✅ Multi-Domain Resume Analysis
+
+
+         ✅ Multi-Domain Resume Analysis
 Supports:
 Software Engineering
 AI/ML
@@ -23,22 +30,24 @@ Full Stack Development
 Instrumentation Engineering
 Automation Systems
 Mechanical Engineering
-✅ AI-Powered Resume Insights
+
+
+
+            ✅ AI-Powered Resume Insights
 Generates:
 AI-style career feedback
 Resume improvement suggestions
 Industry skill recommendations
-✅ Interactive Dashboard
+ 
+
+             ✅ Interactive Dashboard
 Modern responsive UI
 ATS analytics charts
 Progress bars
 Skill visualization
 Professional dashboard layout
-✅ PDF Report Download
-Users can download:
-ATS Report
-JD Match Analysis
-Skill Gap Report
+ 
+
 AI Insights
 🛠️ Tech Stack
 Frontend
@@ -54,21 +63,7 @@ pdf-parse
 Deployment
 Vercel (Frontend)
 Render (Backend)
-📂 Project Structure
-resume-analyst/
-│
-├── client/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── services/
-│   │   └── App.jsx
-│
-├── server/
-│   ├── controllers/
-│   ├── routes/
-│   ├── utils/
-│   ├── data/
-│   └── server.js
+
 ⚙️ Installation
 Clone Repository
 git clone https://github.com/sankardalli04/resume-analyst.git
